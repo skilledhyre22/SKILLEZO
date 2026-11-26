@@ -20,3 +20,4 @@ export * from './tailoring-insights';
 export * from './comparison';
 export * from './CreateApplicationModal';
 export * from './ResumeStudioUploadGateway';
+export * from './ResumeStudioIntroGuide';

@@ -14,8 +14,10 @@ import {
   FtuxWelcomeModal,
   DashboardSpotlightTour,
   FloatingOnboardingDock,
+  OnboardingCelebrationModal,
 } from '@/components/dashboard/ftux';
 import { useSession } from '@/lib/auth-client';
+import { apiFetch } from '@/lib/api';
 import { profileService, CandidateProfile } from '@/services/profile.service';
 import { resumeService } from '@/services/resume.service';
 import { verificationService } from '@/services/verification.service';
@@ -23,6 +25,7 @@ import { verificationService } from '@/services/verification.service';
 export default function DashboardPage() {
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [resumesCount, setResumesCount] = useState<number>(0);
+  const [interviewsCount, setInterviewsCount] = useState<number>(0);
   const [records, setRecords] = useState<any[]>([]);
   const [verifiedSkillsCount, setVerifiedSkillsCount] = useState<number>(0);
   const { data: session } = useSession();
@@ -34,10 +37,11 @@ export default function DashboardPage() {
 
     async function loadData() {
       try {
-        const [profileData, userResumes, recordsData] = await Promise.all([
+        const [profileData, userResumes, recordsData, interviewsRes] = await Promise.all([
           profileService.getMyProfile().catch(() => null),
           resumeService.getUserResumes().catch(() => []),
           verificationService.getUserRecords().catch(() => []),
+          apiFetch<{ success: boolean; data: { total?: number; data?: any[] } }>('/api/interviews/sessions').catch(() => null),
         ]);
 
         if (!isMounted) return;
@@ -47,6 +51,11 @@ export default function DashboardPage() {
         setRecords(recordsData || []);
         const verified = (recordsData || []).filter((r: any) => r.status === 'verified').length;
         setVerifiedSkillsCount(verified);
+
+        if (interviewsRes?.data) {
+          const count = interviewsRes.data.total ?? interviewsRes.data.data?.length ?? 0;
+          setInterviewsCount(count);
+        }
       } catch (err) {
         console.error('Error loading dashboard onboarding data:', err);
       } finally {
@@ -120,11 +129,24 @@ export default function DashboardPage() {
         <FloatingOnboardingDock
           isTourActive={ftux.isTourActive}
           resumesCount={resumesCount}
+          interviewsCount={interviewsCount}
+          completedMilestones={ftux.completedMilestones}
           verifiedSkillsCount={verifiedSkillsCount}
           hasProfileGoal={Boolean(profile?.targetRole || profile?.headline)}
           completionPercentage={profile?.completionPercentage}
           onReplayTour={ftux.replayTour}
           onOpenWelcome={ftux.openWelcomeModal}
+          onAllMilestonesComplete={() => {
+            if (!ftux.hasSeenCelebration) {
+              ftux.triggerCelebration();
+            }
+          }}
+        />
+
+        <OnboardingCelebrationModal
+          isOpen={ftux.showCelebrationModal}
+          userName={session?.user?.name || profile?.headline || 'Candidate'}
+          onDismiss={ftux.dismissCelebration}
         />
       </div>
     </DashboardLayout>

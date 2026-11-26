@@ -35,9 +35,12 @@ interface FloatingOnboardingDockProps {
   verifiedSkillsCount?: number;
   hasProfileGoal?: boolean;
   completionPercentage?: number;
+  interviewsCount?: number;
+  completedMilestones?: string[];
   isCleared?: boolean;
   onReplayTour: () => void;
   onOpenWelcome: () => void;
+  onAllMilestonesComplete?: () => void;
 }
 
 export function FloatingOnboardingDock({
@@ -46,9 +49,12 @@ export function FloatingOnboardingDock({
   verifiedSkillsCount = 0,
   hasProfileGoal = false,
   completionPercentage,
+  interviewsCount = 0,
+  completedMilestones = [],
   isCleared = false,
   onReplayTour,
   onOpenWelcome,
+  onAllMilestonesComplete,
 }: FloatingOnboardingDockProps) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isDismissed, setIsDismissed] = useState<boolean>(false);
@@ -82,7 +88,7 @@ export function FloatingOnboardingDock({
       label: 'Upload Master Resume',
       description: 'Unlock ATS scoring & automated bullet point tailoring',
       href: '/dashboard/resume-studio',
-      isCompleted: resumesCount > 0,
+      isCompleted: resumesCount > 0 || completedMilestones.includes('m-resume'),
       iconName: 'FileText',
     },
     {
@@ -90,7 +96,7 @@ export function FloatingOnboardingDock({
       label: 'Complete Target Role Profile',
       description: 'Set your target title & industry benchmarks',
       href: '/dashboard/profile',
-      isCompleted: hasProfileGoal,
+      isCompleted: hasProfileGoal || completedMilestones.includes('m-profile'),
       iconName: 'UserCheck',
     },
     {
@@ -98,7 +104,7 @@ export function FloatingOnboardingDock({
       label: 'Practice Voice Mock Interview',
       description: 'Get speech cadence & STAR rubric evaluation',
       href: '/dashboard/interview-coach',
-      isCompleted: false, // will update when session logged
+      isCompleted: interviewsCount > 0 || completedMilestones.includes('m-interview'),
       iconName: 'Bot',
     },
     {
@@ -106,13 +112,23 @@ export function FloatingOnboardingDock({
       label: 'Verify Core Skill Credential',
       description: 'Earn tamper-proof employability badge',
       href: '/dashboard/career-gps',
-      isCompleted: verifiedSkillsCount > 0,
+      isCompleted:
+        verifiedSkillsCount > 0 ||
+        completedMilestones.includes('m-verification') ||
+        completedMilestones.includes('m-skill'),
       iconName: 'Shield',
     },
   ];
 
   const completedCount = milestones.filter((m) => m.isCompleted).length;
   const progressPercent = Math.round((completedCount / milestones.length) * 100);
+
+  // Notify parent when 100% is reached
+  useEffect(() => {
+    if (progressPercent >= 100) {
+      onAllMilestonesComplete?.();
+    }
+  }, [progressPercent, onAllMilestonesComplete]);
 
   // Auto-hide when user clears onboarding level (100% complete) or manually dismissed
   const isLevelCleared =

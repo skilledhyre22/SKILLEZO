@@ -11,6 +11,7 @@ import {
   ChevronDown,
   Download,
   Loader2,
+  Compass,
 } from 'lucide-react';
 import { ResumeRecord } from '@/types/resume';
 import { ResumeComparisonResult } from '@/types/resume-comparison.types';
@@ -43,6 +44,7 @@ export interface ResumeStudioHeaderProps {
   onDownloadPdf?: () => void;
   onOpenComparison?: () => void;
   onOpenMobileSidebar: () => void;
+  onStartTour?: () => void;
   targetRole?: string;
   onTargetRoleChange?: (role: string) => void;
 }
@@ -64,6 +66,7 @@ export const ResumeStudioHeader: React.FC<ResumeStudioHeaderProps> = ({
   onSyncMasterResume,
   onOpenComparison,
   onOpenMobileSidebar,
+  onStartTour,
   isDownloadingPdf = false,
   onDownloadPdf,
   targetRole,
@@ -76,7 +79,10 @@ export const ResumeStudioHeader: React.FC<ResumeStudioHeaderProps> = ({
   const isTailored = propIsTailored !== undefined ? propIsTailored : currentResume?.variantType === 'TAILORED';
 
   return (
-    <header className="h-16 shrink-0 border-b border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 gap-3">
+    <header
+      id="resume-studio-header"
+      className="h-16 shrink-0 border-b border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 gap-3"
+    >
       {/* Left: Back Link, Title, Identity Badges, Switcher, Target Job Context */}
       <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
         <button
@@ -89,6 +95,7 @@ export const ResumeStudioHeader: React.FC<ResumeStudioHeaderProps> = ({
 
         {!isAudit ? (
           <button
+            id="resume-studio-btn-back"
             onClick={() => onViewModeChange?.('audit')}
             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
             title="Return to ATS Scores & Portfolio"
@@ -98,6 +105,7 @@ export const ResumeStudioHeader: React.FC<ResumeStudioHeaderProps> = ({
           </button>
         ) : (
           <Link
+            id="resume-studio-btn-back"
             href="/dashboard"
             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
             title="Return to Dashboard"
@@ -110,15 +118,20 @@ export const ResumeStudioHeader: React.FC<ResumeStudioHeaderProps> = ({
         <span className="text-slate-200 dark:text-slate-700 hidden sm:inline">/</span>
 
         {/* Variant Switcher Dropdown */}
-        <ResumeVariantSwitcher
-          resumes={resumes}
-          activeResumeId={activeId}
-          onSelectResume={onSelectResume}
-        />
+        <div id="resume-studio-btn-variant" className="inline-flex">
+          <ResumeVariantSwitcher
+            resumes={resumes}
+            activeResumeId={activeId}
+            onSelectResume={onSelectResume}
+          />
+        </div>
 
         {/* Target Role Selector beside Resume Selector */}
         {onTargetRoleChange && (
-          <div className="relative inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 shadow-xs hover:border-slate-300 dark:hover:border-slate-600 transition-colors shrink-0">
+          <div
+            id="resume-studio-btn-role"
+            className="relative inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 shadow-xs hover:border-slate-300 dark:hover:border-slate-600 transition-colors shrink-0"
+          >
             <Target className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 shrink-0" />
             <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 hidden xl:inline">Role:</span>
             <select
@@ -144,10 +157,25 @@ export const ResumeStudioHeader: React.FC<ResumeStudioHeaderProps> = ({
       </div>
 
       {/* Right: Master Sync Alert & Comparison Launcher */}
-      <div className="flex items-center gap-2">
+      <div id="resume-studio-header-actions" className="flex items-center gap-2">
+        {onStartTour && (
+          <button
+            id="resume-studio-btn-tour"
+            type="button"
+            onClick={onStartTour}
+            data-testid="resume-studio-replay-tour-btn"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-indigo-600 dark:text-[#00D9C0] bg-indigo-50/90 dark:bg-[#00D9C0]/10 hover:bg-indigo-100 dark:hover:bg-[#00D9C0]/20 border border-indigo-200/80 dark:border-[#00D9C0]/30 transition-all cursor-pointer shrink-0"
+            title="Take Interactive Studio Tour"
+          >
+            <Compass className="w-3.5 h-3.5" aria-hidden="true" />
+            <span className="hidden sm:inline">Tour</span>
+          </button>
+        )}
+
         {/* Compare with Master Button: ALWAYS visible on Tailored variants, completely hidden on Master */}
         {isTailored && onOpenComparison && (
           <button
+            id="resume-studio-btn-compare"
             type="button"
             data-testid="header-compare-with-master-btn"
             onClick={onOpenComparison}
@@ -168,6 +196,7 @@ export const ResumeStudioHeader: React.FC<ResumeStudioHeaderProps> = ({
         {/* Download PDF Button: Downloads currently opened resume in canvas */}
         {onDownloadPdf && (
           <button
+            id="resume-studio-btn-download"
             type="button"
             data-testid="header-download-pdf-btn"
             onClick={onDownloadPdf}
@@ -189,6 +218,7 @@ export const ResumeStudioHeader: React.FC<ResumeStudioHeaderProps> = ({
         {/* Stale Master Sync Notification Button */}
         {isMaster && isMasterStale && (
           <button
+            id="resume-studio-btn-sync"
             onClick={onSyncMasterResume}
             disabled={isSyncingMaster}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white transition-all cursor-pointer shadow-xs disabled:opacity-50"

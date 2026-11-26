@@ -8,20 +8,31 @@ export interface FtuxStoredState {
   hasCompletedTour: boolean;
   completedMilestones: string[];
   isDockMinimized: boolean;
+  hasSeenCelebration?: boolean;
 }
 
 const STORAGE_KEY_PREFIX = 'skillezo_ftux_';
+
+export function emitMilestoneCompleted(milestoneId: string) {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('skillezo:milestone-completed', { detail: { milestoneId } })
+    );
+  }
+}
 
 export function useFtuxState(userId?: string) {
   const storageKey = `${STORAGE_KEY_PREFIX}${userId || 'guest'}`;
 
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState<boolean>(false);
+  const [showCelebrationModal, setShowCelebrationModal] = useState<boolean>(false);
   const [isTourActive, setIsTourActive] = useState<boolean>(false);
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
   const [isDockMinimized, setIsDockMinimized] = useState<boolean>(false);
   const [completedMilestones, setCompletedMilestones] = useState<string[]>([]);
   const [hasCompletedTour, setHasCompletedTour] = useState<boolean>(false);
+  const [hasSeenCelebration, setHasSeenCelebration] = useState<boolean>(false);
 
   // Initialize from LocalStorage
   useEffect(() => {
@@ -34,6 +45,7 @@ export function useFtuxState(userId?: string) {
         setHasCompletedTour(!!parsed.hasCompletedTour);
         setCompletedMilestones(parsed.completedMilestones || []);
         setIsDockMinimized(!!parsed.isDockMinimized);
+        setHasSeenCelebration(!!parsed.hasSeenCelebration);
 
         // If user hasn't seen welcome yet, open it
         if (!parsed.hasSeenWelcome) {
@@ -64,6 +76,7 @@ export function useFtuxState(userId?: string) {
               hasCompletedTour: false,
               completedMilestones: [],
               isDockMinimized: false,
+              hasSeenCelebration: false,
             };
 
         const updated: FtuxStoredState = { ...current, ...updates };
@@ -144,9 +157,38 @@ export function useFtuxState(userId?: string) {
     [persistState]
   );
 
+  const triggerCelebration = useCallback(() => {
+    setShowCelebrationModal(true);
+  }, []);
+
+  const dismissCelebration = useCallback(() => {
+    setShowCelebrationModal(false);
+    setHasSeenCelebration(true);
+    persistState({ hasSeenCelebration: true });
+  }, [persistState]);
+
+  // Global listener for cross-module milestone completion events
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleMilestoneEvent = (event: Event) => {
+      const customEvent = event as CustomEvent<{ milestoneId: string }>;
+      if (customEvent.detail?.milestoneId) {
+        markMilestone(customEvent.detail.milestoneId);
+      }
+    };
+
+    window.addEventListener('skillezo:milestone-completed', handleMilestoneEvent);
+    return () => {
+      window.removeEventListener('skillezo:milestone-completed', handleMilestoneEvent);
+    };
+  }, [markMilestone]);
+
   return {
     isInitialized,
     showWelcomeModal,
+    showCelebrationModal,
+    hasSeenCelebration,
     isTourActive,
     currentStepIndex,
     currentStep: FTUX_TOUR_STEPS[currentStepIndex] || FTUX_TOUR_STEPS[0],
@@ -164,5 +206,7 @@ export function useFtuxState(userId?: string) {
     openWelcomeModal,
     toggleDock,
     markMilestone,
+    triggerCelebration,
+    dismissCelebration,
   };
 }

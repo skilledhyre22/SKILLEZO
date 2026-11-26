@@ -18,6 +18,7 @@ import {
   InterviewSession,
 } from '@/types/interview-coach';
 import { InterviewSetupWizard } from '@/components/dashboard/interview-coach/InterviewSetupWizard';
+import { InterviewArenaIntroGuide } from '@/components/dashboard/interview-coach/InterviewArenaIntroGuide';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { toast } from 'sonner';
 
@@ -275,6 +276,9 @@ export default function InterviewCoachPage() {
           onClose={() => setIsWizardOpen(false)}
           onSuccess={handleWizardSuccess}
         />
+
+        {/* ── First-Time User Experience (FTUX) Arena Orientation Guide ───────── */}
+        <InterviewArenaIntroGuide />
       </div>
     </DashboardLayout>
   );

@@ -23,6 +23,7 @@ import {
   ResumeStudioWorkspace,
   ResumeSwitchConfirmDialog,
   ResumeStudioUploadGateway,
+  ResumeStudioIntroGuide,
 } from '@/components/resume-studio';
 
 // Code-split heavy comparison dialog to reduce initial bundle footprint
@@ -55,6 +56,7 @@ function ResumeStudioPageContent() {
   const [initialResumeId] = useState<string | null>(() => {
     return searchParams.get('resumeId');
   });
+  const [replayTourRequested, setReplayTourRequested] = useState(false);
 
   const studio = useResumeStudio(initialResumeId);
 
@@ -276,6 +278,7 @@ function ResumeStudioPageContent() {
             onDownloadPdf={studio.handleDownloadPDF}
             onOpenComparison={comparison.openComparison}
             onOpenMobileSidebar={() => studio.setIsMobileSidebarOpen(true)}
+            onStartTour={() => setReplayTourRequested(true)}
             targetRole={studio.targetRole}
             onTargetRoleChange={studio.handleTargetRoleChange}
           />
@@ -506,6 +509,13 @@ function ResumeStudioPageContent() {
         onCloseEvidence={comparison.closeEvidenceDrawer}
         selectedEvidenceDrawerVM={comparison.selectedEvidenceDrawerVM}
         onNavigateToResume={handleNavigateFromComparison}
+      />
+
+      {/* First-Time User Experience (FTUX) Interactive Spotlight Tour */}
+      <ResumeStudioIntroGuide
+        viewMode={studio.viewMode}
+        forceOpen={replayTourRequested}
+        onComplete={() => setReplayTourRequested(false)}
       />
 
       {/* Global Hidden PDF File Input for Studio */}

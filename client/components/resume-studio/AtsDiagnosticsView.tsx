@@ -75,7 +75,10 @@ export const AtsDiagnosticsView: React.FC<AtsDiagnosticsViewProps> = React.memo(
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-12 animate-fadeIn">
       {/* 1. Header with Title & Target Role Benchmarking */}
-      <div className="p-4 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div
+        id="resume-audit-engine-header"
+        className="p-4 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+      >
         <div>
           <div className="flex items-center gap-2.5">
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
@@ -162,24 +165,31 @@ export const AtsDiagnosticsView: React.FC<AtsDiagnosticsViewProps> = React.memo(
       )}
 
       {/* 2. Primary 3-Pillar Independent Score Header (ATS, Match, Content) */}
-      <ResumeScoreCard
-        atsScore={scoreResult ? analysis.atsScore : 0}
-        matchScore={scoreResult ? (analysis.matchScore ?? 0) : 0}
-        contentScore={scoreResult ? (analysis.contentScore ?? 0) : 0}
-        targetRole={targetRole}
-        isLoading={isScoreCalculating}
-      />
+      <div id="resume-audit-scores">
+        <ResumeScoreCard
+          atsScore={scoreResult ? analysis.atsScore : 0}
+          matchScore={scoreResult ? (analysis.matchScore ?? 0) : 0}
+          contentScore={scoreResult ? (analysis.contentScore ?? 0) : 0}
+          targetRole={targetRole}
+          isLoading={isScoreCalculating}
+        />
+      </div>
 
       {/* 3. Resume Portfolio & Variants Cards Section */}
-      <AtsPortfolioSection
-        selectedResumeId={selectedResumeId}
-        onSelectResume={onSelectResume}
-        onOpenEditor={onOpenEditor}
-        portfolioVersion={portfolioVersion}
-      />
+      <div id="resume-audit-portfolio">
+        <AtsPortfolioSection
+          selectedResumeId={selectedResumeId}
+          onSelectResume={onSelectResume}
+          onOpenEditor={onOpenEditor}
+          portfolioVersion={portfolioVersion}
+        />
+      </div>
 
       {/* 4. Secondary Layer: Diagnostic Deep-Dive Inspection (4 Pillars Tabs) */}
-      <div className="space-y-6 pt-4 border-t border-slate-200 dark:border-slate-800/80">
+      <div
+        id="resume-audit-pillars"
+        className="space-y-6 pt-4 border-t border-slate-200 dark:border-slate-800/80 rounded-2xl"
+      >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">

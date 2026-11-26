@@ -45,16 +45,25 @@ export const ResumeStudioWorkspace: React.FC<ResumeStudioWorkspaceProps> = ({
           {/* DESKTOP & TABLET UNIFIED RESPONSIVE GRID (lg+) */}
           <div className="hidden lg:grid lg:grid-cols-12 gap-6 items-start">
             {effectiveNavigation && (
-              <div className="hidden xl:block xl:col-span-3 sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto no-scrollbar">
+              <div
+                id="resume-studio-navigator"
+                className="hidden xl:block xl:col-span-3 sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto no-scrollbar"
+              >
                 {effectiveNavigation}
               </div>
             )}
 
-            <div className={`${effectiveNavigation ? 'lg:col-span-7 xl:col-span-5 2xl:col-span-5' : 'lg:col-span-7 xl:col-span-7'} min-w-0 flex justify-center`}>
+            <div
+              id="resume-studio-preview"
+              className={`${effectiveNavigation ? 'lg:col-span-7 xl:col-span-5 2xl:col-span-5' : 'lg:col-span-7 xl:col-span-7'} min-w-0 flex justify-center`}
+            >
               {effectiveCanvas}
             </div>
 
-            <div className={`${effectiveNavigation ? 'lg:col-span-5 xl:col-span-4 2xl:col-span-4' : 'lg:col-span-5 xl:col-span-5'} sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto no-scrollbar`}>
+            <div
+              id="resume-studio-editor"
+              className={`${effectiveNavigation ? 'lg:col-span-5 xl:col-span-4 2xl:col-span-4' : 'lg:col-span-5 xl:col-span-5'} sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto no-scrollbar`}
+            >
               {effectiveContext}
             </div>
           </div>

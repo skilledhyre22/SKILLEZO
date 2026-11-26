@@ -215,6 +215,7 @@ export const ResumeEditorPanel: React.FC<ResumeEditorPanelProps> = ({
           </button>
 
           <button
+            id="resume-studio-design-settings"
             onClick={() => onViewModeChange('builder')}
             className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               viewMode === 'builder'

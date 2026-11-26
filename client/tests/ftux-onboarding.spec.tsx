@@ -7,9 +7,13 @@ import {
   FtuxWelcomeModal,
   DashboardSpotlightTour,
   FloatingOnboardingDock,
+  OnboardingCelebrationModal,
+  emitMilestoneCompleted,
   FTUX_TOUR_STEPS,
   SUPERPOWER_CARDS,
 } from '../components/dashboard/ftux';
+import { ResumeStudioIntroGuide } from '../components/resume-studio/ResumeStudioIntroGuide';
+import { InterviewArenaIntroGuide } from '../components/dashboard/interview-coach/InterviewArenaIntroGuide';
 
 // Mock Next.js router
 const mockPush = vi.fn();
@@ -353,6 +357,188 @@ describe('First-Time User Experience (FTUX) Test Suite', () => {
       // Dock disappears
       expect(screen.queryByTestId('floating-onboarding-dock')).toBeNull();
       expect(localStorage.getItem('skillezo_guide_dismissed')).toBe('true');
+    });
+
+    it('triggers onAllMilestonesComplete when all 4 milestones are achieved', () => {
+      const onAllComplete = vi.fn();
+      render(
+        <FloatingOnboardingDock
+          resumesCount={1}
+          verifiedSkillsCount={1}
+          hasProfileGoal={true}
+          interviewsCount={1}
+          onReplayTour={vi.fn()}
+          onOpenWelcome={vi.fn()}
+          onAllMilestonesComplete={onAllComplete}
+        />
+      );
+
+      expect(onAllComplete).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('5. OnboardingCelebrationModal Component', () => {
+    it('renders celebration modal with rewards and user name when open', () => {
+      const onDismiss = vi.fn();
+      render(
+        <OnboardingCelebrationModal
+          isOpen={true}
+          userName="Alex Rivera"
+          onDismiss={onDismiss}
+        />
+      );
+
+      expect(screen.getByTestId('onboarding-celebration-modal')).toBeDefined();
+      expect(screen.getByText(/You're 100% Job-Ready, Alex Rivera!/i)).toBeDefined();
+      expect(screen.getByText(/Job-Ready Explorer/i)).toBeDefined();
+      expect(screen.getByText(/\+500 AI Tokens/i)).toBeDefined();
+      expect(screen.getByText(/Top 5% Talent Pool/i)).toBeDefined();
+
+      const dismissBtn = screen.getByTestId('celebration-dismiss-btn');
+      fireEvent.click(dismissBtn);
+      expect(onDismiss).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not render when isOpen is false', () => {
+      render(
+        <OnboardingCelebrationModal
+          isOpen={false}
+          onDismiss={vi.fn()}
+        />
+      );
+
+      expect(screen.queryByTestId('onboarding-celebration-modal')).toBeNull();
+    });
+  });
+
+  describe('6. ResumeStudioIntroGuide Component', () => {
+    it('renders interactive spotlight tour in editor mode: top bar buttons first, then studio sections', async () => {
+      const onComplete = vi.fn();
+      render(<ResumeStudioIntroGuide viewMode="editor" forceOpen={true} onComplete={onComplete} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('resume-studio-spotlight-tour')).toBeDefined();
+        expect(screen.getByTestId('resume-studio-guide-modal')).toBeDefined();
+      });
+
+      const expectedEditorTitles = [
+        /ATS & Scores Overview/i,
+        /Resume Variant Switcher/i,
+        /Target Role Selector/i,
+        /Interactive Tour Replay/i,
+        /Compare with Master/i,
+        /Download Vector PDF/i,
+        /Sync Profile Updates/i,
+        /Resume Sections & ATS Health/i,
+        /Live Interactive Resume Preview/i,
+        /AI Workspace & Scoring/i,
+        /Design Settings & Templates/i,
+      ];
+
+      for (const titlePattern of expectedEditorTitles) {
+        expect(screen.getByText(titlePattern)).toBeDefined();
+        fireEvent.click(screen.getByTestId('resume-studio-guide-next-btn'));
+      }
+
+      expect(onComplete).toHaveBeenCalledTimes(1);
+      expect(localStorage.getItem('skillezo_seen_resume_studio_editor_v3')).toBe('true');
+    });
+
+    it('renders interactive spotlight tour in audit mode: top bar buttons first, then audit sections', async () => {
+      const onComplete = vi.fn();
+      render(<ResumeStudioIntroGuide viewMode="audit" forceOpen={true} onComplete={onComplete} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('resume-studio-spotlight-tour')).toBeDefined();
+      });
+
+      const expectedAuditTitles = [
+        /Back to Dashboard/i,
+        /Resume Variant Switcher/i,
+        /Target Role Selector/i,
+        /Interactive Tour Replay/i,
+        /Compare with Master/i,
+        /Download Vector PDF/i,
+        /Sync Profile Updates/i,
+        /Resume Intelligence Engine/i,
+        /Authoritative Intelligence Scores/i,
+        /Resume Portfolio & Variants/i,
+        /Audit Pillars & Keyword Deep Dive/i,
+      ];
+
+      for (const titlePattern of expectedAuditTitles) {
+        expect(screen.getByText(titlePattern)).toBeDefined();
+        fireEvent.click(screen.getByTestId('resume-studio-guide-next-btn'));
+      }
+
+      expect(onComplete).toHaveBeenCalledTimes(1);
+      expect(localStorage.getItem('skillezo_seen_resume_studio_audit_v3')).toBe('true');
+    });
+  });
+
+  describe('7. InterviewArenaIntroGuide Component', () => {
+    it('renders and allows stepping through AI persona, speech cadence and STAR rubric', async () => {
+      const onComplete = vi.fn();
+      render(<InterviewArenaIntroGuide forceOpen={true} onComplete={onComplete} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('interview-arena-guide-modal')).toBeDefined();
+      });
+
+      expect(screen.getByText(/Adaptive AI Interviewer/i)).toBeDefined();
+
+      // Step 2
+      fireEvent.click(screen.getByTestId('interview-arena-guide-next-btn'));
+      expect(screen.getByText(/Speech Cadence & Audio Monitor/i)).toBeDefined();
+
+      // Step 3
+      fireEvent.click(screen.getByTestId('interview-arena-guide-next-btn'));
+      expect(screen.getByText(/Instant STAR Rubric Evaluation/i)).toBeDefined();
+
+      // Finish
+      fireEvent.click(screen.getByTestId('interview-arena-guide-next-btn'));
+      expect(onComplete).toHaveBeenCalledTimes(1);
+      expect(localStorage.getItem('skillezo_seen_interview_guide')).toBe('true');
+    });
+  });
+
+  describe('8. Event-Driven Milestone Automation in useFtuxState', () => {
+    it('listens to emitMilestoneCompleted event and updates completed milestones', () => {
+      const { result } = renderHook(() => useFtuxState('event-test-user'));
+
+      expect(result.current.completedMilestones).toEqual([]);
+
+      act(() => {
+        emitMilestoneCompleted('m-interview');
+      });
+
+      expect(result.current.completedMilestones).toContain('m-interview');
+
+      act(() => {
+        emitMilestoneCompleted('m-resume');
+      });
+
+      expect(result.current.completedMilestones).toContain('m-interview');
+      expect(result.current.completedMilestones).toContain('m-resume');
+    });
+
+    it('triggers and dismisses celebration modal', () => {
+      const { result } = renderHook(() => useFtuxState('celebration-test-user'));
+
+      expect(result.current.showCelebrationModal).toBe(false);
+
+      act(() => {
+        result.current.triggerCelebration();
+      });
+
+      expect(result.current.showCelebrationModal).toBe(true);
+
+      act(() => {
+        result.current.dismissCelebration();
+      });
+
+      expect(result.current.showCelebrationModal).toBe(false);
+      expect(result.current.hasSeenCelebration).toBe(true);
     });
   });
 });
