@@ -28,9 +28,24 @@ export default function DashboardPage() {
   const [interviewsCount, setInterviewsCount] = useState<number>(0);
   const [records, setRecords] = useState<any[]>([]);
   const [verifiedSkillsCount, setVerifiedSkillsCount] = useState<number>(0);
-  const { data: session } = useSession();
+  const { data: session, isPending: isSessionPending } = useSession();
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const ftux = useFtuxState(profile?.userId || session?.user?.id);
+
+  const isExistingUser = useMemo(() => {
+    if (resumesCount > 0 || interviewsCount > 0 || verifiedSkillsCount > 0) return true;
+    if ((profile?.completionPercentage ?? 0) >= 80) return true;
+    const createdAt = (session?.user as { createdAt?: string | Date } | undefined)?.createdAt;
+    if (createdAt) {
+      const ageMs = Date.now() - new Date(createdAt).getTime();
+      if (Number.isFinite(ageMs) && ageMs > 24 * 60 * 60 * 1000) return true;
+    }
+    return false;
+  }, [resumesCount, interviewsCount, verifiedSkillsCount, profile?.completionPercentage, session?.user]);
+
+  const ftux = useFtuxState(profile?.userId || session?.user?.id, {
+    isLoading: isLoading || isSessionPending,
+    isExistingUser,
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -76,7 +91,28 @@ export default function DashboardPage() {
   }, [profile]);
 
   return (
-    <DashboardLayout>
+    <DashboardLayout
+      topbarLeftOfSearch={
+        <FloatingOnboardingDock
+          userId={profile?.userId || session?.user?.id}
+          variant="topbar"
+          isTourActive={ftux.isTourActive}
+          resumesCount={resumesCount}
+          interviewsCount={interviewsCount}
+          completedMilestones={ftux.completedMilestones}
+          verifiedSkillsCount={verifiedSkillsCount}
+          hasProfileGoal={Boolean(profile?.targetRole || profile?.headline)}
+          completionPercentage={profile?.completionPercentage}
+          onReplayTour={ftux.replayTour}
+          onOpenWelcome={ftux.openWelcomeModal}
+          onAllMilestonesComplete={() => {
+            if (!ftux.hasSeenCelebration) {
+              ftux.triggerCelebration();
+            }
+          }}
+        />
+      }
+    >
       <div className="space-y-6">
         {/* Welcome Banner */}
         <WelcomeBanner
@@ -124,23 +160,6 @@ export default function DashboardPage() {
           onNext={ftux.nextTourStep}
           onPrev={ftux.prevTourStep}
           onSkip={ftux.skipTour}
-        />
-
-        <FloatingOnboardingDock
-          isTourActive={ftux.isTourActive}
-          resumesCount={resumesCount}
-          interviewsCount={interviewsCount}
-          completedMilestones={ftux.completedMilestones}
-          verifiedSkillsCount={verifiedSkillsCount}
-          hasProfileGoal={Boolean(profile?.targetRole || profile?.headline)}
-          completionPercentage={profile?.completionPercentage}
-          onReplayTour={ftux.replayTour}
-          onOpenWelcome={ftux.openWelcomeModal}
-          onAllMilestonesComplete={() => {
-            if (!ftux.hasSeenCelebration) {
-              ftux.triggerCelebration();
-            }
-          }}
         />
 
         <OnboardingCelebrationModal

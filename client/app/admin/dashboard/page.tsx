@@ -48,9 +48,10 @@ import { AdminPdfUploadPanel } from '@/components/dashboard/learning-hub/admin/A
 import { AdminCurriculumPanel } from '@/components/dashboard/learning-hub/admin/AdminCurriculumPanel';
 import { AdminRolesPanel } from '@/components/dashboard/admin/AdminRolesPanel';
 import { AdminMonetizationPanel } from '@/components/dashboard/admin/AdminMonetizationPanel';
+import { AdminFeedbackPanel } from '@/components/dashboard/admin/AdminFeedbackPanel';
 import { API_BASE_URL } from '@/lib/api';
 
-type AdminTab = 'overview' | 'users' | 'jobs' | 'resumes' | 'learning-hub' | 'roles' | 'monetization';
+type AdminTab = 'overview' | 'users' | 'jobs' | 'resumes' | 'learning-hub' | 'roles' | 'monetization' | 'feedback';
 
 function AdminDashboardContent() {
   const { data: session, isPending: sessionPending } = useSession();
@@ -60,14 +61,14 @@ function AdminDashboardContent() {
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<AdminTab>(
-    tabParam && ['overview', 'users', 'jobs', 'resumes', 'learning-hub', 'roles', 'monetization'].includes(tabParam)
+    tabParam && ['overview', 'users', 'jobs', 'resumes', 'learning-hub', 'roles', 'monetization', 'feedback'].includes(tabParam)
       ? tabParam
       : 'overview'
   );
   const [learningHubSubTab, setLearningHubSubTab] = useState<'curriculum' | 'vault'>('curriculum');
 
   useEffect(() => {
-    if (tabParam && ['overview', 'users', 'jobs', 'resumes', 'learning-hub', 'roles', 'monetization'].includes(tabParam)) {
+    if (tabParam && ['overview', 'users', 'jobs', 'resumes', 'learning-hub', 'roles', 'monetization', 'feedback'].includes(tabParam)) {
       setActiveTab(tabParam);
     } else if (!tabParam) {
       setActiveTab('overview');
@@ -1006,6 +1007,11 @@ function AdminDashboardContent() {
         {/* TAB 7: MONETIZATION & DYNAMIC QUOTA CONTROL */}
         {activeTab === 'monetization' && (
           <AdminMonetizationPanel />
+        )}
+
+        {/* TAB 8: USER FEEDBACK MANAGEMENT */}
+        {activeTab === 'feedback' && (
+          <AdminFeedbackPanel />
         )}
 
         {/* Broadcast Announcement Modal */}

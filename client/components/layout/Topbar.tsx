@@ -9,9 +9,14 @@ import { NotificationDropdown } from './NotificationDropdown';
 interface TopbarProps {
   onOpenMobileSidebar: () => void;
   collapsed: boolean;
+  topbarLeftOfSearch?: React.ReactNode;
 }
 
-export const Topbar: React.FC<TopbarProps> = ({ onOpenMobileSidebar, collapsed }) => {
+export const Topbar: React.FC<TopbarProps> = ({
+  onOpenMobileSidebar,
+  collapsed,
+  topbarLeftOfSearch,
+}) => {
   const [searchQuery, setSearchQuery] = useState('');
 
   return (
@@ -33,8 +38,10 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenMobileSidebar, collapsed }
           <Breadcrumb />
         </div>
 
-        {/* Center / Right Section: Search & User Controls */}
+        {/* Center / Right Section: Guide, Search & User Controls */}
         <div className="flex items-center gap-3 sm:gap-4 ml-auto">
+          {topbarLeftOfSearch}
+
           {/* Topbar Quick Search */}
           <div className="relative hidden md:flex items-center w-64 lg:w-80">
             <Search className="absolute left-3 w-4 h-4 text-slate-400 pointer-events-none" />

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#EC4899"/>
+    </linearGradient>
+    <linearGradient id="shirt2" x1="25" y1="80" x2="95" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1E1B4B"/>
+      <stop offset="100%" stop-color="#312E81"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="60" fill="url(#bg2)"/>
+  <circle cx="24" cy="28" r="12" fill="white" fill-opacity="0.14"/>
+  <circle cx="98" cy="86" r="14" fill="white" fill-opacity="0.1"/>
+  <!-- Shoulders -->
+  <path d="M24 120C25 95 40 83 60 83C80 83 95 95 96 120H24Z" fill="url(#shirt2)"/>
+  <!-- Hair Back -->
+  <circle cx="60" cy="49" r="26" fill="#1E1B4B"/>
+  <!-- Neck -->
+  <rect x="52" y="68" width="16" height="18" rx="8" fill="#E8B496"/>
+  <!-- Head -->
+  <circle cx="60" cy="52" r="21" fill="#F7C9AC"/>
+  <!-- Bangs -->
+  <path d="M39 48C42 33 54 27 68 30C76 32 81 39 81 47C74 41 66 40 58 42C50 44 44 45 39 48Z" fill="#1E1B4B"/>
+  <!-- Eyes -->
+  <circle cx="51" cy="53" r="2.6" fill="#1E1B4B"/>
+  <circle cx="69" cy="53" r="2.6" fill="#1E1B4B"/>
+  <circle cx="51.8" cy="52.2" r="0.9" fill="white"/>
+  <circle cx="69.8" cy="52.2" r="0.9" fill="white"/>
+  <!-- Blush -->
+  <circle cx="45" cy="58" r="3.2" fill="#F472B6" fill-opacity="0.35"/>
+  <circle cx="75" cy="58" r="3.2" fill="#F472B6" fill-opacity="0.35"/>
+  <!-- Smile -->
+  <path d="M54 62.5C57 65 63 65 66 62.5" stroke="#9A5B40" stroke-width="2.2" stroke-linecap="round"/>
+</svg>

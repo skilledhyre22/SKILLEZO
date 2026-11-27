@@ -14,6 +14,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { apiFetch } from '@/lib/api';
 
 export function DashboardFooter() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -22,7 +23,7 @@ export function DashboardFooter() {
   const [feedbackType, setFeedbackType] = useState<'improvement' | 'bug' | 'feature'>('improvement');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleFeedbackSubmit = (e: React.FormEvent) => {
+  const handleFeedbackSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!feedbackText.trim()) {
       toast.error('Please enter your feedback before submitting.');
@@ -30,12 +31,23 @@ export function DashboardFooter() {
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      await apiFetch('/api/feedback', {
+        method: 'POST',
+        body: JSON.stringify({
+          type: feedbackType,
+          message: feedbackText.trim(),
+          pagePath: typeof window !== 'undefined' ? window.location.pathname : '/dashboard',
+        }),
+      });
       setFeedbackOpen(false);
       setFeedbackText('');
       toast.success('Thank you for your feedback! Our team reviews every suggestion.');
-    }, 50);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to submit feedback. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

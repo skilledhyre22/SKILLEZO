@@ -31,9 +31,13 @@ const UpgradePlanModal = dynamic(
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
+  topbarLeftOfSearch?: React.ReactNode;
 }
 
-export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
+  children,
+  topbarLeftOfSearch,
+}) => {
   const router = useRouter();
   const pathname = usePathname();
   const { data: session, isPending } = useSession();
@@ -204,7 +208,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         </React.Suspense>
 
         {/* Top Header */}
-        <Topbar onOpenMobileSidebar={() => setMobileOpen(true)} collapsed={collapsed} />
+        <Topbar
+          onOpenMobileSidebar={() => setMobileOpen(true)}
+          collapsed={collapsed}
+          topbarLeftOfSearch={topbarLeftOfSearch}
+        />
 
         {/* Main View Area */}
         <main

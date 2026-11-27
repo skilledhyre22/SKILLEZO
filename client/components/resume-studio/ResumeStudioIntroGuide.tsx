@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles,
@@ -22,6 +22,11 @@ import {
   ChevronLeft,
   X,
 } from 'lucide-react';
+import {
+  FtuxStageKey,
+  isFtuxStageCompleted,
+  markFtuxStageCompleted,
+} from '@/components/dashboard/ftux/useFtuxState';
 
 export interface ResumeStudioIntroStep {
   id: string;
@@ -247,70 +252,83 @@ const EDITOR_SECTION_STEPS: ResumeStudioIntroStep[] = [
 
 interface ResumeStudioIntroGuideProps {
   viewMode?: string;
+  userId?: string;
   forceOpen?: boolean;
   onComplete?: () => void;
 }
 
 export function ResumeStudioIntroGuide({
   viewMode = 'editor',
+  userId,
   forceOpen = false,
   onComplete,
 }: ResumeStudioIntroGuideProps) {
   const isAuditMode = viewMode === 'audit' || viewMode === 'analysis';
-  const candidateSteps = useMemo(
-    () =>
-      isAuditMode
-        ? [AUDIT_BACK_STEP, ...SHARED_HEADER_BUTTON_STEPS, ...AUDIT_SECTION_STEPS]
-        : [EDITOR_BACK_STEP, ...SHARED_HEADER_BUTTON_STEPS, ...EDITOR_SECTION_STEPS],
+  const viewStage: FtuxStageKey = isAuditMode ? 'resumeStudioAudit' : 'resumeStudioEditor';
+
+  const buildCandidateSteps = useCallback(
+    (includeTopBar: boolean) => {
+      const topBar = isAuditMode
+        ? [AUDIT_BACK_STEP, ...SHARED_HEADER_BUTTON_STEPS]
+        : [EDITOR_BACK_STEP, ...SHARED_HEADER_BUTTON_STEPS];
+      const sections = isAuditMode ? AUDIT_SECTION_STEPS : EDITOR_SECTION_STEPS;
+      return includeTopBar ? [...topBar, ...sections] : sections;
+    },
     [isAuditMode]
   );
 
-  const storageKey = isAuditMode
-    ? 'skillezo_seen_resume_studio_audit_v3'
-    : 'skillezo_seen_resume_studio_editor_v3';
-
   const [isOpen, setIsOpen] = useState(false);
-  const [activeSteps, setActiveSteps] = useState<ResumeStudioIntroStep[]>(candidateSteps);
+  const [activeSteps, setActiveSteps] = useState<ResumeStudioIntroStep[]>(() =>
+    buildCandidateSteps(true)
+  );
   const [currentIndex, setCurrentIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Filter to only currently visible DOM targets so conditional buttons (Sync Profile, Compare) never create dead steps
-  const resolveAvailableSteps = useCallback(() => {
-    if (typeof document === 'undefined') return candidateSteps;
-    const visible = candidateSteps.filter((step) => {
-      const el = document.querySelector(step.targetSelector);
-      if (!el) return false;
-      const rect = el.getBoundingClientRect();
-      return rect.width > 0 && rect.height > 0;
-    });
-    return visible.length > 0 ? visible : candidateSteps;
-  }, [candidateSteps]);
+  const resolveAvailableSteps = useCallback(
+    (includeTopBar: boolean) => {
+      const candidateSteps = buildCandidateSteps(includeTopBar);
+      if (typeof document === 'undefined') return candidateSteps;
+      const visible = candidateSteps.filter((step) => {
+        const el = document.querySelector(step.targetSelector);
+        if (!el) return false;
+        const rect = el.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+      });
+      return visible.length > 0 ? visible : candidateSteps;
+    },
+    [buildCandidateSteps]
+  );
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      const hasSeen = localStorage.getItem(storageKey);
       if (forceOpen) {
-        setActiveSteps(resolveAvailableSteps());
+        setActiveSteps(resolveAvailableSteps(true));
         setCurrentIndex(0);
         setIsOpen(true);
         return;
       }
-      if (!hasSeen) {
-        const timer = setTimeout(() => {
-          setActiveSteps(resolveAvailableSteps());
-          setCurrentIndex(0);
-          setIsOpen(true);
-        }, 450);
-        return () => clearTimeout(timer);
-      } else {
+
+      // Skip auto-opening if user already completed this stage or finished initial onboarding
+      if (isFtuxStageCompleted(viewStage, userId)) {
         setIsOpen(false);
+        return;
       }
+
+      // Show top bar tour only once across Resume Studio (never duplicate between Audit & Canvas Editor)
+      const includeTopBar = !isFtuxStageCompleted('resumeStudioTopBar', userId);
+      const timer = setTimeout(() => {
+        setActiveSteps(resolveAvailableSteps(includeTopBar));
+        setCurrentIndex(0);
+        setIsOpen(true);
+      }, 450);
+      return () => clearTimeout(timer);
     } catch {
       // ignore storage access issues
     }
-  }, [forceOpen, storageKey, resolveAvailableSteps]);
+  }, [forceOpen, viewStage, userId, resolveAvailableSteps]);
 
   const currentStep = activeSteps[currentIndex] || activeSteps[0];
 
@@ -371,15 +389,10 @@ export function ResumeStudioIntroGuide({
 
   const handleDismiss = useCallback(() => {
     setIsOpen(false);
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem(storageKey, 'true');
-      } catch {
-        // ignore
-      }
-    }
+    markFtuxStageCompleted('resumeStudioTopBar', userId);
+    markFtuxStageCompleted(viewStage, userId);
     onComplete?.();
-  }, [onComplete, storageKey]);
+  }, [onComplete, viewStage, userId]);
 
   const handleNext = useCallback(() => {
     if (currentIndex < activeSteps.length - 1) {

@@ -14,6 +14,7 @@ import {
   Compass,
 } from 'lucide-react';
 import { UserMenu } from '@/components/layout/UserMenu';
+import { DashboardFooter } from '@/components/layout/DashboardFooter';
 import { CreateJobModal } from '@/components/recruiter/CreateJobModal';
 
 interface RecruiterLayoutProps {
@@ -140,8 +141,9 @@ export const RecruiterLayout: React.FC<RecruiterLayoutProps> = ({ children }) =>
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        {children}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col justify-between">
+        <div className="flex-1">{children}</div>
+        <DashboardFooter />
       </main>
 
       {/* Global Create Job Modal */}

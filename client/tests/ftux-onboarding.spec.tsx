@@ -9,6 +9,8 @@ import {
   FloatingOnboardingDock,
   OnboardingCelebrationModal,
   emitMilestoneCompleted,
+  isFtuxStageCompleted,
+  markFtuxStageCompleted,
   FTUX_TOUR_STEPS,
   SUPERPOWER_CARDS,
 } from '../components/dashboard/ftux';
@@ -414,7 +416,7 @@ describe('First-Time User Experience (FTUX) Test Suite', () => {
   describe('6. ResumeStudioIntroGuide Component', () => {
     it('renders interactive spotlight tour in editor mode: top bar buttons first, then studio sections', async () => {
       const onComplete = vi.fn();
-      render(<ResumeStudioIntroGuide viewMode="editor" forceOpen={true} onComplete={onComplete} />);
+      render(<ResumeStudioIntroGuide viewMode="editor" userId="u1" forceOpen={true} onComplete={onComplete} />);
 
       await waitFor(() => {
         expect(screen.getByTestId('resume-studio-spotlight-tour')).toBeDefined();
@@ -441,12 +443,13 @@ describe('First-Time User Experience (FTUX) Test Suite', () => {
       }
 
       expect(onComplete).toHaveBeenCalledTimes(1);
-      expect(localStorage.getItem('skillezo_seen_resume_studio_editor_v3')).toBe('true');
+      expect(isFtuxStageCompleted('resumeStudioTopBar', 'u1')).toBe(true);
+      expect(isFtuxStageCompleted('resumeStudioEditor', 'u1')).toBe(true);
     });
 
     it('renders interactive spotlight tour in audit mode: top bar buttons first, then audit sections', async () => {
       const onComplete = vi.fn();
-      render(<ResumeStudioIntroGuide viewMode="audit" forceOpen={true} onComplete={onComplete} />);
+      render(<ResumeStudioIntroGuide viewMode="audit" userId="u2" forceOpen={true} onComplete={onComplete} />);
 
       await waitFor(() => {
         expect(screen.getByTestId('resume-studio-spotlight-tour')).toBeDefined();
@@ -472,7 +475,35 @@ describe('First-Time User Experience (FTUX) Test Suite', () => {
       }
 
       expect(onComplete).toHaveBeenCalledTimes(1);
-      expect(localStorage.getItem('skillezo_seen_resume_studio_audit_v3')).toBe('true');
+      expect(isFtuxStageCompleted('resumeStudioTopBar', 'u2')).toBe(true);
+      expect(isFtuxStageCompleted('resumeStudioAudit', 'u2')).toBe(true);
+    });
+
+    it('skips duplicate top bar tour when switching to editor after already seeing top bar in audit', async () => {
+      markFtuxStageCompleted('resumeStudioTopBar', 'u3');
+      markFtuxStageCompleted('resumeStudioAudit', 'u3');
+
+      render(<ResumeStudioIntroGuide viewMode="editor" userId="u3" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('resume-studio-spotlight-tour')).toBeDefined();
+      });
+
+      // Should start directly at Editor workspace sections without repeating Top Bar
+      expect(screen.getByText(/Resume Sections & ATS Health/i)).toBeDefined();
+    });
+
+    it('does not auto-open once initial onboarding or stage is completed until forceOpen is true', async () => {
+      markFtuxStageCompleted('resumeStudioEditor', 'u4');
+
+      const { rerender } = render(<ResumeStudioIntroGuide viewMode="editor" userId="u4" />);
+      await new Promise((r) => setTimeout(r, 550));
+      expect(screen.queryByTestId('resume-studio-spotlight-tour')).toBeNull();
+
+      rerender(<ResumeStudioIntroGuide viewMode="editor" userId="u4" forceOpen={true} />);
+      await waitFor(() => {
+        expect(screen.getByTestId('resume-studio-spotlight-tour')).toBeDefined();
+      });
     });
   });
 
@@ -539,6 +570,37 @@ describe('First-Time User Experience (FTUX) Test Suite', () => {
 
       expect(result.current.showCelebrationModal).toBe(false);
       expect(result.current.hasSeenCelebration).toBe(true);
+    });
+
+    it('never shows welcome modal to existing/old accounts or while session is still loading', () => {
+      const { result, rerender } = renderHook(
+        ({ userId, isLoading, isExistingUser }) =>
+          useFtuxState(userId, { isLoading, isExistingUser }),
+        {
+          initialProps: {
+            userId: undefined as string | undefined,
+            isLoading: true,
+            isExistingUser: false,
+          },
+        }
+      );
+
+      expect(result.current.showWelcomeModal).toBe(false);
+
+      rerender({ userId: 'old-account-1', isLoading: false, isExistingUser: true });
+      expect(result.current.showWelcomeModal).toBe(false);
+      expect(result.current.hasCompletedTour).toBe(true);
+    });
+
+    it('still shows welcome modal to a brand-new account even if an older account dismissed the guide in the same browser', () => {
+      localStorage.setItem('skillezo_guide_dismissed', 'true');
+      localStorage.setItem('skillezo_guide_dismissed_old-account', 'true');
+
+      const { result } = renderHook(() =>
+        useFtuxState('brand-new-account', { isLoading: false, isExistingUser: false })
+      );
+
+      expect(result.current.showWelcomeModal).toBe(true);
     });
   });
 });

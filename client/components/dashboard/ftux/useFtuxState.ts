@@ -3,15 +3,94 @@
 import { useState, useEffect, useCallback } from 'react';
 import { FTUX_TOUR_STEPS } from './ftux-steps.config';
 
+export type FtuxStageKey =
+  | 'dashboardTour'
+  | 'resumeStudioTopBar'
+  | 'resumeStudioAudit'
+  | 'resumeStudioEditor'
+  | 'interviewArena';
+
 export interface FtuxStoredState {
   hasSeenWelcome: boolean;
   hasCompletedTour: boolean;
   completedMilestones: string[];
   isDockMinimized: boolean;
   hasSeenCelebration?: boolean;
+  completedStages?: Partial<Record<FtuxStageKey, boolean>>;
 }
 
 const STORAGE_KEY_PREFIX = 'skillezo_ftux_';
+const GUIDE_DISMISSED_KEY = 'skillezo_guide_dismissed';
+
+function resolveFtuxStorageKey(userId?: string): string {
+  if (userId) return `${STORAGE_KEY_PREFIX}${userId}`;
+  if (typeof window !== 'undefined') {
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(STORAGE_KEY_PREFIX)) {
+          return key;
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return `${STORAGE_KEY_PREFIX}guest`;
+}
+
+function getGuideDismissedKey(userId?: string): string {
+  return userId ? `${GUIDE_DISMISSED_KEY}_${userId}` : GUIDE_DISMISSED_KEY;
+}
+
+export function isFtuxStageCompleted(stage: FtuxStageKey, userId?: string): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    if (localStorage.getItem(getGuideDismissedKey(userId)) === 'true') {
+      return true;
+    }
+    const raw = localStorage.getItem(resolveFtuxStorageKey(userId));
+    if (!raw) return false;
+    const parsed: FtuxStoredState = JSON.parse(raw);
+    if (parsed.hasSeenCelebration) {
+      return true;
+    }
+    if (stage === 'dashboardTour' && parsed.hasCompletedTour) {
+      return true;
+    }
+    return Boolean(parsed.completedStages?.[stage]);
+  } catch {
+    return false;
+  }
+}
+
+export function markFtuxStageCompleted(stage: FtuxStageKey, userId?: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const key = resolveFtuxStorageKey(userId);
+    const raw = localStorage.getItem(key);
+    const current: FtuxStoredState = raw
+      ? JSON.parse(raw)
+      : {
+          hasSeenWelcome: false,
+          hasCompletedTour: false,
+          completedMilestones: [],
+          isDockMinimized: false,
+          hasSeenCelebration: false,
+          completedStages: {},
+        };
+    const updated: FtuxStoredState = {
+      ...current,
+      completedStages: {
+        ...(current.completedStages || {}),
+        [stage]: true,
+      },
+    };
+    localStorage.setItem(key, JSON.stringify(updated));
+  } catch {
+    // ignore
+  }
+}
 
 export function emitMilestoneCompleted(milestoneId: string) {
   if (typeof window !== 'undefined') {
@@ -21,8 +100,15 @@ export function emitMilestoneCompleted(milestoneId: string) {
   }
 }
 
-export function useFtuxState(userId?: string) {
+export interface UseFtuxOptions {
+  isLoading?: boolean;
+  isExistingUser?: boolean;
+}
+
+export function useFtuxState(userId?: string, options?: UseFtuxOptions) {
   const storageKey = `${STORAGE_KEY_PREFIX}${userId || 'guest'}`;
+  const isDataLoading = Boolean(options?.isLoading);
+  const isExistingUser = Boolean(options?.isExistingUser);
 
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState<boolean>(false);
@@ -34,34 +120,65 @@ export function useFtuxState(userId?: string) {
   const [hasCompletedTour, setHasCompletedTour] = useState<boolean>(false);
   const [hasSeenCelebration, setHasSeenCelebration] = useState<boolean>(false);
 
-  // Initialize from LocalStorage
+  // Initialize from LocalStorage (wait until session/profile finishes loading before auto-opening)
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (isDataLoading) return;
 
     try {
+      const isGuideDismissed =
+        localStorage.getItem(getGuideDismissedKey(userId)) === 'true';
       const raw = localStorage.getItem(storageKey);
+
       if (raw) {
         const parsed: FtuxStoredState = JSON.parse(raw);
-        setHasCompletedTour(!!parsed.hasCompletedTour);
-        setCompletedMilestones(parsed.completedMilestones || []);
-        setIsDockMinimized(!!parsed.isDockMinimized);
-        setHasSeenCelebration(!!parsed.hasSeenCelebration);
+        const alreadyOnboarded =
+          isExistingUser ||
+          isGuideDismissed ||
+          Boolean(parsed.hasSeenWelcome) ||
+          Boolean(parsed.hasCompletedTour) ||
+          Boolean(parsed.hasSeenCelebration);
 
-        // If user hasn't seen welcome yet, open it
-        if (!parsed.hasSeenWelcome) {
-          setShowWelcomeModal(true);
+        setHasCompletedTour(Boolean(parsed.hasCompletedTour) || isExistingUser);
+        setCompletedMilestones(parsed.completedMilestones || []);
+        setIsDockMinimized(Boolean(parsed.isDockMinimized));
+        setHasSeenCelebration(Boolean(parsed.hasSeenCelebration));
+        setShowWelcomeModal(!alreadyOnboarded);
+
+        if (isExistingUser && (!parsed.hasSeenWelcome || !parsed.hasCompletedTour)) {
+          localStorage.setItem(
+            storageKey,
+            JSON.stringify({ ...parsed, hasSeenWelcome: true, hasCompletedTour: true })
+          );
         }
+      } else if (isExistingUser || isGuideDismissed) {
+        // Existing/old account or previously dismissed: never show first-time welcome banner
+        setShowWelcomeModal(false);
+        setHasCompletedTour(true);
+        localStorage.setItem(
+          storageKey,
+          JSON.stringify({
+            hasSeenWelcome: true,
+            hasCompletedTour: true,
+            completedMilestones: [],
+            isDockMinimized: false,
+            hasSeenCelebration: false,
+            completedStages: { dashboardTour: true },
+          })
+        );
       } else {
-        // First time user! Open welcome modal
+        // Genuine brand-new user! Open welcome modal
         setShowWelcomeModal(true);
       }
     } catch (e) {
       console.warn('Failed to parse FTUX state from localStorage:', e);
-      setShowWelcomeModal(true);
+      if (!isExistingUser) {
+        setShowWelcomeModal(true);
+      }
     } finally {
       setIsInitialized(true);
     }
-  }, [storageKey]);
+  }, [storageKey, userId, isDataLoading, isExistingUser]);
 
   // Save changes to LocalStorage
   const persistState = useCallback(
@@ -120,13 +237,15 @@ export function useFtuxState(userId?: string) {
     setIsTourActive(false);
     setHasCompletedTour(true);
     persistState({ hasCompletedTour: true });
-  }, [persistState]);
+    markFtuxStageCompleted('dashboardTour', userId);
+  }, [persistState, userId]);
 
   const finishTour = useCallback(() => {
     setIsTourActive(false);
     setHasCompletedTour(true);
     persistState({ hasCompletedTour: true });
-  }, [persistState]);
+    markFtuxStageCompleted('dashboardTour', userId);
+  }, [persistState, userId]);
 
   const replayTour = useCallback(() => {
     setIsTourActive(true);

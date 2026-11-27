@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <defs>
+    <linearGradient id="bg1" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3D5AFE"/>
+      <stop offset="100%" stop-color="#00D9C0"/>
+    </linearGradient>
+    <linearGradient id="shirt1" x1="25" y1="78" x2="95" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0D153A"/>
+      <stop offset="100%" stop-color="#1E2B6B"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="60" fill="url(#bg1)"/>
+  <circle cx="96" cy="24" r="14" fill="white" fill-opacity="0.14"/>
+  <circle cx="22" cy="92" r="10" fill="white" fill-opacity="0.1"/>
+  <!-- Shoulders -->
+  <path d="M24 120C24 95 40 83 60 83C80 83 96 95 96 120H24Z" fill="url(#shirt1)"/>
+  <!-- Neck -->
+  <rect x="52" y="68" width="16" height="18" rx="8" fill="#F6C8A8"/>
+  <!-- Head -->
+  <circle cx="60" cy="51" r="22" fill="#FFD9BE"/>
+  <!-- Hair -->
+  <path d="M38 48C38 33 48 24 61 24C74 24 83 33 82 48C79 39 71 36 60 36C49 36 41 40 38 48Z" fill="#0F172A"/>
+  <!-- Glasses / Visor -->
+  <rect x="44" y="47" width="13" height="9" rx="4" fill="#0D153A" fill-opacity="0.9"/>
+  <rect x="63" y="47" width="13" height="9" rx="4" fill="#0D153A" fill-opacity="0.9"/>
+  <path d="M57 51H63" stroke="#0D153A" stroke-width="2" stroke-linecap="round"/>
+  <!-- Eyes -->
+  <circle cx="50.5" cy="51.5" r="2" fill="#00D9C0"/>
+  <circle cx="69.5" cy="51.5" r="2" fill="#00D9C0"/>
+  <!-- Smile -->
+  <path d="M54 62C56.5 64.5 63.5 64.5 66 62" stroke="#9A5B40" stroke-width="2.2" stroke-linecap="round"/>
+</svg>

@@ -30,6 +30,8 @@ export interface OnboardingMilestone {
 }
 
 interface FloatingOnboardingDockProps {
+  userId?: string;
+  variant?: 'floating' | 'topbar';
   isTourActive?: boolean;
   resumesCount?: number;
   verifiedSkillsCount?: number;
@@ -44,6 +46,8 @@ interface FloatingOnboardingDockProps {
 }
 
 export function FloatingOnboardingDock({
+  userId,
+  variant = 'floating',
   isTourActive = false,
   resumesCount = 0,
   verifiedSkillsCount = 0,
@@ -59,22 +63,22 @@ export function FloatingOnboardingDock({
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isDismissed, setIsDismissed] = useState<boolean>(false);
 
+  const dismissKey = userId ? `skillezo_guide_dismissed_${userId}` : 'skillezo_guide_dismissed';
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      if (localStorage.getItem('skillezo_guide_dismissed') === 'true') {
-        setIsDismissed(true);
-      }
+      setIsDismissed(localStorage.getItem(dismissKey) === 'true');
     } catch {
       // ignore
     }
-  }, []);
+  }, [dismissKey]);
 
   const handleDismiss = () => {
     setIsDismissed(true);
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem('skillezo_guide_dismissed', 'true');
+        localStorage.setItem(dismissKey, 'true');
       } catch (e) {
         console.warn('Failed to save guide dismissal state:', e);
       }
@@ -140,165 +144,201 @@ export function FloatingOnboardingDock({
     return null;
   }
 
-  return (
-    <div
-      className="fixed bottom-22 right-6 sm:bottom-6 sm:right-24 z-40 select-none"
-      data-testid="floating-onboarding-dock"
+  const isTopbar = variant === 'topbar';
+
+  const triggerButton = (
+    <motion.button
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.97 }}
+      onClick={() => setIsOpen((prev) => !prev)}
+      data-testid="dock-trigger-btn"
+      className={
+        isTopbar
+          ? 'relative flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#0D153A] hover:bg-[#131E52] border border-[#3D5AFE]/40 hover:border-[#00D9C0]/50 shadow-xs text-white transition-all cursor-pointer group'
+          : 'relative flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-[#0D153A]/90 hover:bg-[#0D153A] border border-[#3D5AFE]/40 hover:border-[#00D9C0]/50 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-white backdrop-blur-xl transition-all cursor-pointer group'
+      }
     >
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 16, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 16, scale: 0.95 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="mb-3 w-80 sm:w-96 rounded-2xl bg-[#0D153A]/95 border border-[#3D5AFE]/30 shadow-[0_20px_50px_rgba(0,0,0,0.7)] backdrop-blur-2xl p-4 text-white overflow-hidden"
-            data-testid="onboarding-dock-drawer"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <span className="p-1.5 rounded-lg bg-[#3D5AFE]/20 text-[#3D5AFE]">
-                  <Compass className="w-4 h-4" />
-                </span>
-                <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-white">
-                    Onboarding Guide
-                  </h4>
-                  <p className="text-[11px] text-white/50">
-                    {completedCount} of {milestones.length} milestones unlocked
-                  </p>
-                </div>
-              </div>
+      <span
+        className={`absolute -inset-0.5 ${
+          isTopbar ? 'rounded-xl' : 'rounded-full'
+        } bg-gradient-to-r from-[#3D5AFE]/20 to-[#00D9C0]/20 blur-sm pointer-events-none group-hover:opacity-100 transition-opacity`}
+      />
 
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="p-1 rounded-md text-white/50 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-                  aria-label="Collapse onboarding guide"
-                >
-                  <ChevronDown className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={handleDismiss}
-                  className="p-1 rounded-md text-white/40 hover:text-rose-400 hover:bg-white/10 transition-colors cursor-pointer"
-                  aria-label="Dismiss guide permanently"
-                  title="Dismiss guide"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+      <div className="relative flex items-center gap-2">
+        <span
+          className={`grid ${
+            isTopbar ? 'h-5 w-5' : 'h-6 w-6'
+          } place-items-center rounded-full bg-[#3D5AFE]/20 text-[#3D5AFE]`}
+        >
+          <Compass className="w-3.5 h-3.5 animate-spin-slow" />
+        </span>
+
+        <span className="text-xs font-bold tracking-tight">Guide</span>
+
+        <span className="px-1.5 py-0.5 rounded-md bg-[#00D9C0]/15 text-[#00D9C0] text-[10px] font-mono-num font-bold">
+          {progressPercent}%
+        </span>
+
+        {isTopbar ? (
+          isOpen ? (
+            <ChevronUp className="w-3.5 h-3.5 text-white/60" />
+          ) : (
+            <ChevronDown className="w-3.5 h-3.5 text-white/60" />
+          )
+        ) : isOpen ? (
+          <ChevronDown className="w-3.5 h-3.5 text-white/50" />
+        ) : (
+          <ChevronUp className="w-3.5 h-3.5 text-white/50" />
+        )}
+      </div>
+    </motion.button>
+  );
+
+  const drawerPopover = (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0, y: isTopbar ? -10 : 16, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: isTopbar ? -10 : 16, scale: 0.95 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          className={
+            isTopbar
+              ? 'absolute right-0 top-full mt-2 z-50 w-80 sm:w-96 rounded-2xl bg-[#0D153A]/95 border border-[#3D5AFE]/30 shadow-[0_20px_50px_rgba(0,0,0,0.7)] backdrop-blur-2xl p-4 text-white overflow-hidden'
+              : 'mb-3 w-80 sm:w-96 rounded-2xl bg-[#0D153A]/95 border border-[#3D5AFE]/30 shadow-[0_20px_50px_rgba(0,0,0,0.7)] backdrop-blur-2xl p-4 text-white overflow-hidden'
+          }
+          data-testid="onboarding-dock-drawer"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between pb-3 border-b border-white/10">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-[#3D5AFE]/20 text-[#3D5AFE]">
+                <Compass className="w-4 h-4" />
+              </span>
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-white">
+                  Onboarding Guide
+                </h4>
+                <p className="text-[11px] text-white/50">
+                  {completedCount} of {milestones.length} milestones unlocked
+                </p>
               </div>
             </div>
 
-            {/* Progress Bar */}
-            <div className="my-3 space-y-1.5">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-white/60">Readiness Progress</span>
-                <span className="font-mono-num font-bold text-[#00D9C0]">{progressPercent}%</span>
-              </div>
-              <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progressPercent}%` }}
-                  transition={{ duration: 0.6, ease: 'easeOut' }}
-                  className="h-full bg-gradient-to-r from-[#3D5AFE] via-[#00D9C0] to-emerald-400"
-                />
-              </div>
-            </div>
-
-            {/* Milestones List */}
-            <div className="space-y-2 mt-3 max-h-56 overflow-y-auto pr-1">
-              {milestones.map((milestone) => (
-                <Link
-                  key={milestone.id}
-                  href={milestone.href}
-                  className="group flex items-start gap-2.5 p-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-white/15 transition-all"
-                >
-                  <div className="mt-0.5 shrink-0">
-                    {milestone.isCompleted ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    ) : (
-                      <Circle className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span
-                        className={`text-xs font-semibold truncate ${
-                          milestone.isCompleted
-                            ? 'line-through text-white/50'
-                            : 'text-white group-hover:text-[#00D9C0] transition-colors'
-                        }`}
-                      >
-                        {milestone.label}
-                      </span>
-                      <ArrowUpRight className="w-3 h-3 text-white/30 group-hover:text-white transition-colors shrink-0 ml-1" />
-                    </div>
-                    <p className="text-[10px] text-white/50 truncate mt-0.5">
-                      {milestone.description}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-
-            {/* Bottom Actions: Replay Tour & Dismiss */}
-            <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+            <div className="flex items-center gap-1">
               <button
-                onClick={() => {
-                  setIsOpen(false);
-                  onReplayTour();
-                }}
-                data-testid="dock-replay-tour-btn"
-                className="inline-flex items-center gap-1.5 text-white/70 hover:text-white hover:underline transition-colors cursor-pointer"
+                onClick={() => setIsOpen(false)}
+                className="p-1 rounded-md text-white/50 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                aria-label="Collapse onboarding guide"
               >
-                <RotateCcw className="w-3.5 h-3.5 text-[#00D9C0]" />
-                <span>Replay Tour</span>
+                <ChevronDown className="w-4 h-4" />
               </button>
-
               <button
                 onClick={handleDismiss}
-                data-testid="dock-dismiss-btn"
-                className="inline-flex items-center gap-1 text-white/40 hover:text-white transition-colors cursor-pointer text-[11px]"
+                className="p-1 rounded-md text-white/40 hover:text-rose-400 hover:bg-white/10 transition-colors cursor-pointer"
+                aria-label="Dismiss guide permanently"
+                title="Dismiss guide"
               >
-                <span>Dismiss Guide</span>
+                <X className="w-4 h-4" />
               </button>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
 
-      {/* Floating Trigger Button Pill */}
-      <motion.button
-        whileHover={{ scale: 1.04 }}
-        whileTap={{ scale: 0.96 }}
-        onClick={() => setIsOpen((prev) => !prev)}
-        data-testid="dock-trigger-btn"
-        className="relative flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-[#0D153A]/90 hover:bg-[#0D153A] border border-[#3D5AFE]/40 hover:border-[#00D9C0]/50 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-white backdrop-blur-xl transition-all cursor-pointer group"
-      >
-        {/* Subtle breathing glow ring */}
-        <span className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-[#3D5AFE]/20 to-[#00D9C0]/20 blur-sm pointer-events-none group-hover:opacity-100 transition-opacity" />
+          {/* Progress Bar */}
+          <div className="my-3 space-y-1.5">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="text-white/60">Readiness Progress</span>
+              <span className="font-mono-num font-bold text-[#00D9C0]">{progressPercent}%</span>
+            </div>
+            <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${progressPercent}%` }}
+                transition={{ duration: 0.6, ease: 'easeOut' }}
+                className="h-full bg-gradient-to-r from-[#3D5AFE] via-[#00D9C0] to-emerald-400"
+              />
+            </div>
+          </div>
 
-        <div className="relative flex items-center gap-2">
-          <span className="grid h-6 w-6 place-items-center rounded-full bg-[#3D5AFE]/20 text-[#3D5AFE]">
-            <Compass className="w-3.5 h-3.5 animate-spin-slow" />
-          </span>
+          {/* Milestones List */}
+          <div className="space-y-2 mt-3 max-h-56 overflow-y-auto pr-1">
+            {milestones.map((milestone) => (
+              <Link
+                key={milestone.id}
+                href={milestone.href}
+                className="group flex items-start gap-2.5 p-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-white/15 transition-all"
+              >
+                <div className="mt-0.5 shrink-0">
+                  {milestone.isCompleted ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  ) : (
+                    <Circle className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`text-xs font-semibold truncate ${
+                        milestone.isCompleted
+                          ? 'line-through text-white/50'
+                          : 'text-white group-hover:text-[#00D9C0] transition-colors'
+                      }`}
+                    >
+                      {milestone.label}
+                    </span>
+                    <ArrowUpRight className="w-3 h-3 text-white/30 group-hover:text-white transition-colors shrink-0 ml-1" />
+                  </div>
+                  <p className="text-[10px] text-white/50 truncate mt-0.5">
+                    {milestone.description}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
 
-          <span className="text-xs font-bold tracking-tight">
-            Guide
-          </span>
+          {/* Bottom Actions: Replay Tour & Dismiss */}
+          <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                onReplayTour();
+              }}
+              data-testid="dock-replay-tour-btn"
+              className="inline-flex items-center gap-1.5 text-white/70 hover:text-white hover:underline transition-colors cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-[#00D9C0]" />
+              <span>Replay Tour</span>
+            </button>
 
-          <span className="px-1.5 py-0.5 rounded-md bg-[#00D9C0]/15 text-[#00D9C0] text-[10px] font-mono-num font-bold">
-            {progressPercent}%
-          </span>
+            <button
+              onClick={handleDismiss}
+              data-testid="dock-dismiss-btn"
+              className="inline-flex items-center gap-1 text-white/40 hover:text-white transition-colors cursor-pointer text-[11px]"
+            >
+              <span>Dismiss Guide</span>
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 
-          {isOpen ? (
-            <ChevronDown className="w-3.5 h-3.5 text-white/50" />
-          ) : (
-            <ChevronUp className="w-3.5 h-3.5 text-white/50" />
-          )}
-        </div>
-      </motion.button>
+  return (
+    <div
+      className={isTopbar ? 'relative select-none' : 'fixed bottom-22 right-6 sm:bottom-6 sm:right-24 z-40 select-none'}
+      data-testid="floating-onboarding-dock"
+    >
+      {isTopbar ? (
+        <>
+          {triggerButton}
+          {drawerPopover}
+        </>
+      ) : (
+        <>
+          {drawerPopover}
+          {triggerButton}
+        </>
+      )}
     </div>
   );
 }

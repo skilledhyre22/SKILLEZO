@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <defs>
+    <linearGradient id="bg4" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#EF4444"/>
+    </linearGradient>
+    <linearGradient id="shirt4" x1="25" y1="80" x2="95" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0D153A"/>
+      <stop offset="100%" stop-color="#1E293B"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="60" fill="url(#bg4)"/>
+  <circle cx="26" cy="30" r="14" fill="white" fill-opacity="0.16"/>
+  <!-- Shoulders -->
+  <path d="M24 120C25 95 40 83 60 83C80 83 95 95 96 120H24Z" fill="url(#shirt4)"/>
+  <!-- Headphones Band -->
+  <path d="M36 52C36 36 46 25 60 25C74 25 84 36 84 52" stroke="#0D153A" stroke-width="4" stroke-linecap="round"/>
+  <rect x="33" y="46" width="7" height="14" rx="3.5" fill="#0D153A"/>
+  <rect x="80" y="46" width="7" height="14" rx="3.5" fill="#0D153A"/>
+  <!-- Neck -->
+  <rect x="52" y="68" width="16" height="18" rx="8" fill="#E8B496"/>
+  <!-- Head -->
+  <circle cx="60" cy="52" r="21" fill="#F7C9AC"/>
+  <!-- Hair -->
+  <path d="M40 46C42 35 50 30 60 30C70 30 78 35 80 46C73 40 66 39 60 39C54 39 47 40 40 46Z" fill="#1E293B"/>
+  <!-- Eyes -->
+  <circle cx="51.5" cy="53" r="2.6" fill="#0D153A"/>
+  <circle cx="68.5" cy="53" r="2.6" fill="#0D153A"/>
+  <circle cx="52.3" cy="52.2" r="0.9" fill="white"/>
+  <circle cx="69.3" cy="52.2" r="0.9" fill="white"/>
+  <!-- Smile -->
+  <path d="M54 62.5C57 65 63 65 66 62.5" stroke="#9A5B40" stroke-width="2.2" stroke-linecap="round"/>
+</svg>

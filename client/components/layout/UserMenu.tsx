@@ -98,6 +98,7 @@ export const UserMenu: React.FC = () => {
         <UserAvatar
           name={user.name}
           avatarUrl={user.avatarUrl}
+          seed={session?.user?.id || user.email || user.name}
           size="sm"
           showStatusBadge
         />
@@ -128,6 +129,7 @@ export const UserMenu: React.FC = () => {
                 <UserAvatar
                   name={user.name}
                   avatarUrl={user.avatarUrl}
+                  seed={session?.user?.id || user.email || user.name}
                   size="md"
                 />
                 <div className="space-y-0.5 overflow-hidden">

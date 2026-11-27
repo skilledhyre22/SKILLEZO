@@ -38,5 +38,11 @@ router.get("/monetization-config", asyncHandler(AdminMonetizationController.getC
 router.put("/monetization-config", asyncHandler(AdminMonetizationController.updateConfig));
 router.post("/monetization-config/reset", asyncHandler(AdminMonetizationController.resetConfig));
 
+// 7. User Feedback Management
+import { FeedbackController } from "./controllers/feedback.controller";
+router.get("/feedback", asyncHandler(FeedbackController.listFeedback));
+router.patch("/feedback/:id", asyncHandler(FeedbackController.updateFeedback));
+router.delete("/feedback/:id", asyncHandler(FeedbackController.deleteFeedback));
+
 export const adminRouter = router;
 export default router;

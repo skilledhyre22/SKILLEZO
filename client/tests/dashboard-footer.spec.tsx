@@ -3,6 +3,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { DashboardFooter } from '../components/layout/DashboardFooter';
+import { apiFetch } from '../lib/api';
+
+vi.mock('../lib/api', () => ({
+  apiFetch: vi.fn().mockResolvedValue({ success: true, data: {} }),
+}));
 
 describe('DashboardFooter Component', () => {
   beforeEach(() => {
@@ -64,5 +69,9 @@ describe('DashboardFooter Component', () => {
     await waitFor(() => {
       expect(screen.queryByTestId('feedback-modal')).toBeNull();
     });
+    expect(apiFetch).toHaveBeenCalledWith(
+      '/api/feedback',
+      expect.objectContaining({ method: 'POST' })
+    );
   });
 });

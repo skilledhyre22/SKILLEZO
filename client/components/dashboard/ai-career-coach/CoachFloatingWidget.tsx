@@ -5,8 +5,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useCareerCoach } from '@/hooks/useCareerCoach';
 import { MessageBubble } from './MessageBubble';
 import { LifecycleIndicator } from './LifecycleIndicator';
+import { CoachAvatarMark } from './CoachAvatarMark';
 import {
-  Bot,
   Sparkles,
   X,
   Maximize2,
@@ -27,6 +27,7 @@ const QUICK_PROMPTS = [
 export const CoachFloatingWidget: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
+  const [eyeOffset, setEyeOffset] = useState({ x: 0, y: 0 });
   const pathname = usePathname();
   const router = useRouter();
 
@@ -118,8 +119,8 @@ export const CoachFloatingWidget: React.FC = () => {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/80 shrink-0">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-xs">
-                <Bot className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-xl bg-[#0D153A] border border-[#3D5AFE]/40 flex items-center justify-center shadow-xs">
+                <CoachAvatarMark size={22} isThinking={isGenerating} />
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
@@ -275,30 +276,62 @@ export const CoachFloatingWidget: React.FC = () => {
       )}
 
       {/* Floating Trigger Icon Button (Bottom Right Corner) */}
-      <div className="fixed bottom-6 right-6 z-40">
+      <div className="fixed bottom-6 right-6 z-40 group flex items-center gap-2.5">
+        {/* Zero-CLS Hover Pill Label */}
+        {!isOpen && (
+          <div className="pointer-events-none hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0D153A]/95 border border-[#00D9C0]/35 text-white text-xs font-semibold shadow-lg backdrop-blur-xl opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200">
+            <Sparkles className="w-3 h-3 text-[#00D9C0]" />
+            <span>Ask AI Coach</span>
+          </div>
+        )}
+
         <button
           type="button"
           onClick={() => setIsOpen((prev) => !prev)}
+          onMouseMove={(e) => {
+            if (isOpen) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const dx = ((e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2)) * 2;
+            const dy = ((e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2)) * 1.6;
+            setEyeOffset({
+              x: Math.max(-2, Math.min(2, dx)),
+              y: Math.max(-1.6, Math.min(1.6, dy)),
+            });
+          }}
+          onMouseLeave={() => setEyeOffset({ x: 0, y: 0 })}
           aria-label={isOpen ? 'Close AI Career Coach' : 'Open AI Career Coach'}
           title="Open AI Career Coach"
-          className={`group relative flex items-center justify-center w-14 h-14 rounded-2xl shadow-xl transition-all duration-300 cursor-pointer ${
+          className={`relative flex items-center justify-center w-14 h-14 rounded-2xl shadow-xl transition-all duration-300 cursor-pointer ${
             isOpen
-              ? 'bg-slate-800 text-white hover:bg-slate-900 shadow-slate-900/30 rotate-90'
-              : 'bg-gradient-to-tr from-indigo-600 via-indigo-700 to-purple-600 text-white hover:scale-108 hover:shadow-indigo-500/40 shadow-indigo-500/30'
+              ? 'bg-slate-900 border border-white/15 text-white hover:bg-slate-800 shadow-slate-900/40 rotate-90'
+              : 'bg-gradient-to-br from-[#131E52] via-[#0D153A] to-[#070D28] border border-[#00D9C0]/45 hover:border-[#00D9C0]/80 text-white hover:scale-105 shadow-[0_12px_35px_rgba(13,21,58,0.55)]'
           }`}
         >
-          {/* Subtle Ambient Pulse Ring when closed */}
+          {/* Subtle Ambient Gradient Aura when closed */}
           {!isOpen && (
-            <span className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-500 opacity-30 blur-sm group-hover:opacity-60 transition-opacity animate-pulse pointer-events-none" />
+            <span
+              className={`absolute -inset-1 rounded-2xl bg-gradient-to-tr from-[#3D5AFE] via-[#00D9C0] to-[#7C4DFF] blur-md pointer-events-none transition-opacity ${
+                isGenerating ? 'opacity-65 animate-pulse' : 'opacity-25 group-hover:opacity-55'
+              }`}
+            />
           )}
 
           {isOpen ? (
             <X className="w-6 h-6 transition-transform duration-200" />
           ) : (
             <div className="relative flex items-center justify-center">
-              <Bot className="w-6 h-6 group-hover:scale-110 transition-transform duration-200" />
-              {/* Emerald Active Status Dot */}
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 border-2 border-white dark:border-slate-900 rounded-full" />
+              <CoachAvatarMark
+                size={32}
+                isThinking={isGenerating}
+                interactive
+                eyeOffset={eyeOffset}
+                className="group-hover:scale-105 transition-transform duration-200"
+              />
+              {/* Live Emerald Active Status Dot */}
+              <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400 border-2 border-[#0D153A]" />
+              </span>
             </div>
           )}
         </button>

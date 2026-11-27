@@ -183,6 +183,12 @@ export const adminSidebarSections: NavSection[] = [
         icon: Target,
         badge: 'ROLES',
       },
+      {
+        label: 'User Feedback',
+        href: '/admin/dashboard?tab=feedback',
+        icon: MessageSquare,
+        badge: 'FEEDBACK',
+      },
     ],
   },
 ];

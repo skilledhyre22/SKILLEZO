@@ -259,6 +259,74 @@ class AdminService {
     );
     return res.data;
   }
+
+  async getFeedback(params: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    type?: string;
+    search?: string;
+  }): Promise<AdminFeedbackListResponse> {
+    const query = new URLSearchParams();
+    if (params.page) query.set("page", String(params.page));
+    if (params.limit) query.set("limit", String(params.limit));
+    if (params.status) query.set("status", params.status);
+    if (params.type) query.set("type", params.type);
+    if (params.search) query.set("search", params.search);
+
+    const res = await apiFetch<{ success: boolean; data: AdminFeedbackListResponse }>(
+      `/api/admin/feedback?${query.toString()}`
+    );
+    return res.data;
+  }
+
+  async updateFeedback(
+    id: string,
+    payload: { status?: "new" | "reviewed" | "resolved"; adminNotes?: string }
+  ): Promise<AdminFeedbackItem> {
+    const res = await apiFetch<{ success: boolean; data: AdminFeedbackItem }>(
+      `/api/admin/feedback/${id}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      }
+    );
+    return res.data;
+  }
+
+  async deleteFeedback(id: string): Promise<void> {
+    await apiFetch(`/api/admin/feedback/${id}`, { method: "DELETE" });
+  }
+}
+
+export interface AdminFeedbackItem {
+  _id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  type: "improvement" | "bug" | "feature";
+  message: string;
+  pagePath?: string;
+  status: "new" | "reviewed" | "resolved";
+  adminNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminFeedbackListResponse {
+  items: AdminFeedbackItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  summary: {
+    total: number;
+    new: number;
+    reviewed: number;
+    resolved: number;
+  };
 }
 
 export const adminService = new AdminService();

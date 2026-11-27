@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useResumeStudio } from '@/hooks/useResumeStudio';
 import { useResumeComparison } from '@/hooks/useResumeComparison';
+import { useSession } from '@/lib/auth-client';
 import { ComparisonChangeVM } from '@/types/resume-comparison-view.types';
 import {
   ResumeStudioSidebar,
@@ -52,6 +53,7 @@ interface ProgrammaticNavigationToken {
 function ResumeStudioPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
 
   const [initialResumeId] = useState<string | null>(() => {
     return searchParams.get('resumeId');
@@ -514,6 +516,7 @@ function ResumeStudioPageContent() {
       {/* First-Time User Experience (FTUX) Interactive Spotlight Tour */}
       <ResumeStudioIntroGuide
         viewMode={studio.viewMode}
+        userId={session?.user?.id}
         forceOpen={replayTourRequested}
         onComplete={() => setReplayTourRequested(false)}
       />

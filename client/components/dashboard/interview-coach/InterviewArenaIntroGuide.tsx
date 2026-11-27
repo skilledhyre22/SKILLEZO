@@ -11,6 +11,10 @@ import {
   ChevronLeft,
   X,
 } from 'lucide-react';
+import {
+  isFtuxStageCompleted,
+  markFtuxStageCompleted,
+} from '@/components/dashboard/ftux/useFtuxState';
 
 export interface InterviewIntroStep {
   id: string;
@@ -58,18 +62,19 @@ const INTRO_STEPS: InterviewIntroStep[] = [
 const STORAGE_KEY = 'skillezo_seen_interview_guide';
 
 interface InterviewArenaIntroGuideProps {
+  userId?: string;
   forceOpen?: boolean;
   onComplete?: () => void;
 }
 
-export function InterviewArenaIntroGuide({ forceOpen = false, onComplete }: InterviewArenaIntroGuideProps) {
+export function InterviewArenaIntroGuide({ userId, forceOpen = false, onComplete }: InterviewArenaIntroGuideProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      const hasSeen = localStorage.getItem(STORAGE_KEY);
+      const hasSeen = localStorage.getItem(STORAGE_KEY) || isFtuxStageCompleted('interviewArena', userId);
       if (!hasSeen || forceOpen) {
         const timer = setTimeout(() => setIsOpen(true), 600);
         return () => clearTimeout(timer);
@@ -77,7 +82,7 @@ export function InterviewArenaIntroGuide({ forceOpen = false, onComplete }: Inte
     } catch {
       // ignore
     }
-  }, [forceOpen]);
+  }, [forceOpen, userId]);
 
   const handleDismiss = () => {
     setIsOpen(false);
@@ -88,6 +93,7 @@ export function InterviewArenaIntroGuide({ forceOpen = false, onComplete }: Inte
         // ignore
       }
     }
+    markFtuxStageCompleted('interviewArena', userId);
     onComplete?.();
   };
 
